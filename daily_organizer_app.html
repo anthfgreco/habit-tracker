@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Organizer</title>
+  <style>
+    :root {
+      --bg: #0f1221;
+      --panel: #171a2b;
+      --panel-2: #1e2238;
+      --soft: #262b47;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #edf1ff;
+      --muted: #a8b0d3;
+      --accent: #7b73fc;
+      --accent-2: #8fd3ff;
+      --success: #52c98b;
+      --danger: #ff7171;
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+      --radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(123, 115, 252, 0.18), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(143, 211, 255, 0.12), transparent 24%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    button, input, textarea {
+      font: inherit;
+    }
+
+    .app {
+      max-width: 1460px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .title-wrap p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+      color: var(--text);
+      padding: 11px 16px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(123, 115, 252, 0.45);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), #5f58db);
+      border-color: rgba(123, 115, 252, 0.65);
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: minmax(400px, 430px) minmax(0, 1fr);
+      gap: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 22px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px 0;
+    }
+
+    .card-header h2,
+    .card-header h3 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .card-header p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    .selected-day {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .month-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .weekday {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      padding-bottom: 8px;
+    }
+
+    .day-cell {
+      min-width: 0;
+      min-height: 82px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      padding: 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow: hidden;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .day-cell:hover {
+      transform: translateY(-1px);
+      border-color: rgba(123, 115, 252, 0.4);
+    }
+
+    .day-cell.muted {
+      opacity: 0.45;
+    }
+
+    .day-cell.selected {
+      background: linear-gradient(180deg, rgba(123,115,252,0.24), rgba(123,115,252,0.08));
+      border-color: rgba(123,115,252,0.6);
+    }
+
+    .day-cell.today {
+      outline: 1px solid rgba(143, 211, 255, 0.55);
+    }
+
+    .day-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      font-size: 14px;
+    }
+
+    .day-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .habit-input-row,
+    .event-form,
+    .toolbar-row {
+      display: grid;
+      gap: 10px;
+    }
+
+    .habit-input-row {
+      grid-template-columns: 1fr auto;
+      margin-bottom: 16px;
+    }
+
+    .input,
+    .textarea,
+    .select {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      padding: 12px 14px;
+      outline: none;
+    }
+
+    .textarea {
+      min-height: 260px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    .input::placeholder,
+    .textarea::placeholder {
+      color: #8d95b8;
+    }
+
+    .habit-list,
+    .event-list,
+    .agenda-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .habit-item,
+    .event-item {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .habit-head,
+    .event-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .habit-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .habit-check {
+      width: 22px;
+      height: 22px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .habit-name,
+    .event-title {
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .habit-sub,
+    .event-sub,
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .habit-actions,
+    .event-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tiny-btn {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .tiny-btn.danger {
+      color: #ffd1d1;
+      border-color: rgba(255, 113, 113, 0.25);
+      background: rgba(255, 113, 113, 0.08);
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 22px;
+    }
+
+    .event-form {
+      grid-template-columns: 140px 1fr;
+      margin-bottom: 16px;
+    }
+
+    .event-form .full {
+      grid-column: 1 / -1;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 78px 1fr;
+      gap: 10px;
+      align-items: stretch;
+      min-height: 48px;
+    }
+
+    .timeline-time {
+      color: var(--muted);
+      font-size: 12px;
+      padding-top: 4px;
+    }
+
+    .timeline-slot {
+      border: 1px dashed rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 8px 10px;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+    }
+
+    .timeline-event {
+      width: 100%;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, rgba(123,115,252,0.26), rgba(143,211,255,0.16));
+      border: 1px solid rgba(123,115,252,0.35);
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 14px;
+      padding: 18px 0 4px;
+    }
+
+    .notes-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1120px) {
+      .dashboard,
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        padding: 18px;
+      }
+
+      .selected-day {
+        grid-template-columns: 1fr;
+      }
+
+      .event-form,
+      .habit-input-row {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .day-cell {
+        min-height: 74px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="title-wrap">
+        <h1>Daily Organizer</h1>
+        <p>One place for the day plan, habits, and notes. Everything saves locally in the browser.</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn" id="todayBtn">Jump to today</button>
+        <button class="btn" id="exportBtn">Export data</button>
+        <button class="btn" id="importBtn">Import data</button>
+        <button class="btn primary" id="seedBtn">Add starter habits</button>
+        <input type="file" id="importFile" accept="application/json" hidden />
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <div class="stack">
+        <section class="card">
+          <div class="card-body">
+            <div class="month-nav">
+              <button class="icon-btn" id="prevMonthBtn" aria-label="Previous month">←</button>
+              <div class="month-title" id="monthTitle"></div>
+              <button class="icon-btn" id="nextMonthBtn" aria-label="Next month">→</button>
+            </div>
+            <div class="calendar-weekdays" id="calendarWeekdays"></div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <h2>Habits</h2>
+              <p>Track progress for the selected day.</p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="habit-input-row">
+              <input class="input" id="newHabitInput" placeholder="Add a habit, for example: Walk 20 minutes" />
+              <button class="btn primary" id="addHabitBtn">Add habit</button>
+            </div>
+            <div class="habit-list" id="habitList"></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="card">
+          <div class="card-body">
+            <div class="selected-day">
+              <div class="stat">
+                <div class="stat-label">Selected day</div>
+                <div class="stat-value" id="selectedDateLabel"></div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Habits completed</div>
+                <div class="stat-value" id="habitCompletionStat">0 / 0</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Planned events</div>
+                <div class="stat-value" id="eventCountStat">0</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="content-grid">
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Daily calendar</h2>
+                <p>Add time-based items for the selected day.</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="event-form">
+                <input class="input" id="eventTimeInput" type="time" value="09:00" />
+                <input class="input" id="eventTitleInput" placeholder="Event title" />
+                <input class="input full" id="eventDetailsInput" placeholder="Optional details" />
+                <button class="btn primary full" id="addEventBtn">Add to calendar</button>
+              </div>
+
+              <div class="event-list" id="eventList"></div>
+
+              <div class="toolbar-row">
+                <h3 style="margin: 8px 0 0;">Agenda view</h3>
+                <div class="timeline" id="timeline"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Notes</h2>
+                <p>Notes are stored separately for each day.</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="notes-meta">
+                <span id="notesDateLabel"></span>
+                <span id="saveStatus">Saved</span>
+              </div>
+              <textarea class="textarea" id="notesInput" placeholder="Write anything for this day: reminders, meeting notes, journal entries, tasks..."></textarea>
+              <div class="footer-note">Tip: the notes save automatically as you type.</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "daily-organizer-v1";
+    const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const TIMELINE_HOURS = Array.from({ length: 18 }, (_, index) => index + 6);
+
+    const elements = {
+      monthTitle: document.getElementById("monthTitle"),
+      calendarWeekdays: document.getElementById("calendarWeekdays"),
+      calendarGrid: document.getElementById("calendarGrid"),
+      selectedDateLabel: document.getElementById("selectedDateLabel"),
+      notesDateLabel: document.getElementById("notesDateLabel"),
+      habitCompletionStat: document.getElementById("habitCompletionStat"),
+      eventCountStat: document.getElementById("eventCountStat"),
+      habitList: document.getElementById("habitList"),
+      newHabitInput: document.getElementById("newHabitInput"),
+      notesInput: document.getElementById("notesInput"),
+      saveStatus: document.getElementById("saveStatus"),
+      eventTimeInput: document.getElementById("eventTimeInput"),
+      eventTitleInput: document.getElementById("eventTitleInput"),
+      eventDetailsInput: document.getElementById("eventDetailsInput"),
+      eventList: document.getElementById("eventList"),
+      timeline: document.getElementById("timeline"),
+      prevMonthBtn: document.getElementById("prevMonthBtn"),
+      nextMonthBtn: document.getElementById("nextMonthBtn"),
+      todayBtn: document.getElementById("todayBtn"),
+      addHabitBtn: document.getElementById("addHabitBtn"),
+      addEventBtn: document.getElementById("addEventBtn"),
+      exportBtn: document.getElementById("exportBtn"),
+      importBtn: document.getElementById("importBtn"),
+      importFile: document.getElementById("importFile"),
+      seedBtn: document.getElementById("seedBtn")
+    };
+
+    const today = new Date();
+    const todayKey = toDateKey(today);
+
+    let state = loadState();
+    let notesSaveTimer = null;
+
+    function createDefaultState() {
+      return {
+        selectedDate: todayKey,
+        currentMonth: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`,
+        habits: [],
+        days: {}
+      };
+    }
+
+    function loadState() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (!parsed || typeof parsed !== "object") {
+          return createDefaultState();
+        }
+
+        return {
+          selectedDate: parsed.selectedDate || todayKey,
+          currentMonth: parsed.currentMonth || `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`,
+          habits: Array.isArray(parsed.habits) ? parsed.habits : [],
+          days: parsed.days && typeof parsed.days === "object" ? parsed.days : {}
+        };
+      } catch {
+        return createDefaultState();
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getDayData(dateKey) {
+      if (!state.days[dateKey]) {
+        state.days[dateKey] = {
+          notes: "",
+          habits: {},
+          events: []
+        };
+      }
+
+      if (!state.days[dateKey].habits) state.days[dateKey].habits = {};
+      if (!Array.isArray(state.days[dateKey].events)) state.days[dateKey].events = [];
+      if (typeof state.days[dateKey].notes !== "string") state.days[dateKey].notes = "";
+
+      return state.days[dateKey];
+    }
+
+    function toDateKey(value) {
+      const year = value.getFullYear();
+      const month = String(value.getMonth() + 1).padStart(2, "0");
+      const day = String(value.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseDateKey(dateKey) {
+      const [year, month, day] = dateKey.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    function formatLongDate(dateKey) {
+      const date = parseDateKey(dateKey);
+      return new Intl.DateTimeFormat(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+      }).format(date);
+    }
+
+    function formatMonthLabel(monthKey) {
+      const [year, month] = monthKey.split("-").map(Number);
+      const date = new Date(year, month - 1, 1);
+      return new Intl.DateTimeFormat(undefined, {
+        month: "long",
+        year: "numeric"
+      }).format(date);
+    }
+
+    function formatTime(time) {
+      const [hourString, minuteString] = time.split(":");
+      const hours = Number(hourString);
+      const minutes = Number(minuteString);
+      const suffix = hours >= 12 ? "PM" : "AM";
+      const normalizedHours = ((hours + 11) % 12) + 1;
+      return `${normalizedHours}:${String(minutes).padStart(2, "0")} ${suffix}`;
+    }
+
+    function setSelectedDate(dateKey) {
+      state.selectedDate = dateKey;
+      state.currentMonth = dateKey.slice(0, 7);
+      saveState();
+      render();
+    }
+
+    function shiftMonth(delta) {
+      const [year, month] = state.currentMonth.split("-").map(Number);
+      const date = new Date(year, month - 1 + delta, 1);
+      state.currentMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      saveState();
+      renderCalendar();
+    }
+
+    function addHabit() {
+      const name = elements.newHabitInput.value.trim();
+      if (!name) return;
+
+      state.habits.push({
+        id: crypto.randomUUID(),
+        name
+      });
+
+      elements.newHabitInput.value = "";
+      saveState();
+      render();
+    }
+
+    function toggleHabit(habitId) {
+      const day = getDayData(state.selectedDate);
+      day.habits[habitId] = !day.habits[habitId];
+      saveState();
+      render();
+    }
+
+    function renameHabit(habitId) {
+      const targetHabit = state.habits.find((habit) => habit.id === habitId);
+      if (!targetHabit) return;
+      const updatedName = window.prompt("Rename habit", targetHabit.name)?.trim();
+      if (!updatedName) return;
+      targetHabit.name = updatedName;
+      saveState();
+      render();
+    }
+
+    function deleteHabit(habitId) {
+      const targetHabit = state.habits.find((habit) => habit.id === habitId);
+      if (!targetHabit) return;
+      const shouldDelete = window.confirm(`Delete habit \"${targetHabit.name}\"? This keeps past daily data, but removes it from the tracker list.`);
+      if (!shouldDelete) return;
+
+      state.habits = state.habits.filter((habit) => habit.id !== habitId);
+      saveState();
+      render();
+    }
+
+    function countHabitStreak(habitId) {
+      let streak = 0;
+      const cursor = parseDateKey(state.selectedDate);
+
+      while (true) {
+        const key = toDateKey(cursor);
+        const day = state.days[key];
+        if (!day || !day.habits || !day.habits[habitId]) {
+          break;
+        }
+        streak += 1;
+        cursor.setDate(cursor.getDate() - 1);
+      }
+
+      return streak;
+    }
+
+    function addEvent() {
+      const title = elements.eventTitleInput.value.trim();
+      const time = elements.eventTimeInput.value;
+      const details = elements.eventDetailsInput.value.trim();
+
+      if (!title || !time) return;
+
+      const day = getDayData(state.selectedDate);
+      day.events.push({
+        id: crypto.randomUUID(),
+        time,
+        title,
+        details
+      });
+      day.events.sort((a, b) => a.time.localeCompare(b.time));
+
+      elements.eventTitleInput.value = "";
+      elements.eventDetailsInput.value = "";
+      saveState();
+      render();
+    }
+
+    function deleteEvent(eventId) {
+      const day = getDayData(state.selectedDate);
+      day.events = day.events.filter((event) => event.id !== eventId);
+      saveState();
+      render();
+    }
+
+    function editEvent(eventId) {
+      const day = getDayData(state.selectedDate);
+      const targetEvent = day.events.find((event) => event.id === eventId);
+      if (!targetEvent) return;
+
+      const nextTime = window.prompt("Edit time (HH:MM)", targetEvent.time)?.trim();
+      if (!nextTime) return;
+      const nextTitle = window.prompt("Edit title", targetEvent.title)?.trim();
+      if (!nextTitle) return;
+      const nextDetails = window.prompt("Edit details", targetEvent.details || "") ?? "";
+
+      targetEvent.time = nextTime;
+      targetEvent.title = nextTitle;
+      targetEvent.details = nextDetails.trim();
+      day.events.sort((a, b) => a.time.localeCompare(b.time));
+      saveState();
+      render();
+    }
+
+    function updateNotes(nextValue) {
+      const day = getDayData(state.selectedDate);
+      day.notes = nextValue;
+      elements.saveStatus.textContent = "Saving...";
+
+      clearTimeout(notesSaveTimer);
+      notesSaveTimer = setTimeout(() => {
+        saveState();
+        elements.saveStatus.textContent = "Saved";
+        renderCalendar();
+      }, 220);
+    }
+
+    function exportData() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `daily-organizer-backup-${todayKey}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result || ""));
+          if (!parsed || typeof parsed !== "object") {
+            throw new Error("Invalid file");
+          }
+
+          state = {
+            selectedDate: parsed.selectedDate || todayKey,
+            currentMonth: parsed.currentMonth || (parsed.selectedDate ? parsed.selectedDate.slice(0, 7) : `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`),
+            habits: Array.isArray(parsed.habits) ? parsed.habits : [],
+            days: parsed.days && typeof parsed.days === "object" ? parsed.days : {}
+          };
+
+          saveState();
+          render();
+          window.alert("Import complete.");
+        } catch {
+          window.alert("Could not import that file.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function addStarterHabits() {
+      if (state.habits.length > 0) {
+        const overwrite = window.confirm("Starter habits add to the existing list. Continue?");
+        if (!overwrite) return;
+      }
+
+      const starters = ["Drink water", "Stretch", "Walk", "Read 10 minutes", "Review priorities"];
+      const existingNames = new Set(state.habits.map((habit) => habit.name.toLowerCase()));
+
+      starters.forEach((name) => {
+        if (!existingNames.has(name.toLowerCase())) {
+          state.habits.push({ id: crypto.randomUUID(), name });
+        }
+      });
+
+      saveState();
+      render();
+    }
+
+    function getDaySummary(dateKey) {
+      const day = state.days[dateKey];
+      if (!day) {
+        return { eventCount: 0, completedHabits: 0, hasNotes: false };
+      }
+
+      const completedHabits = Object.values(day.habits || {}).filter(Boolean).length;
+      const eventCount = Array.isArray(day.events) ? day.events.length : 0;
+      const hasNotes = Boolean((day.notes || "").trim());
+      return { eventCount, completedHabits, hasNotes };
+    }
+
+    function renderCalendar() {
+      elements.monthTitle.textContent = formatMonthLabel(state.currentMonth);
+      elements.calendarWeekdays.innerHTML = "";
+      WEEKDAYS.forEach((weekday) => {
+        const el = document.createElement("div");
+        el.className = "weekday";
+        el.textContent = weekday;
+        elements.calendarWeekdays.appendChild(el);
+      });
+
+      const [year, month] = state.currentMonth.split("-").map(Number);
+      const firstDay = new Date(year, month - 1, 1);
+      const firstGridDate = new Date(firstDay);
+      firstGridDate.setDate(firstGridDate.getDate() - firstGridDate.getDay());
+
+      elements.calendarGrid.innerHTML = "";
+
+      for (let index = 0; index < 42; index += 1) {
+        const cellDate = new Date(firstGridDate);
+        cellDate.setDate(firstGridDate.getDate() + index);
+        const dateKey = toDateKey(cellDate);
+        const summary = getDaySummary(dateKey);
+
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "day-cell";
+        if (cellDate.getMonth() !== month - 1) cell.classList.add("muted");
+        if (dateKey === state.selectedDate) cell.classList.add("selected");
+        if (dateKey === todayKey) cell.classList.add("today");
+
+        cell.innerHTML = `
+          <div class="day-top">
+            <span>${cellDate.getDate()}</span>
+            ${dateKey === todayKey ? '<span class="pill">Today</span>' : ""}
+          </div>
+          <div class="day-meta">
+            ${summary.eventCount ? `<span class="pill">${summary.eventCount} event${summary.eventCount === 1 ? "" : "s"}</span>` : ""}
+            ${summary.completedHabits ? `<span class="pill">${summary.completedHabits} done</span>` : ""}
+            ${summary.hasNotes ? '<span class="pill">Notes</span>' : ""}
+          </div>
+        `;
+
+        cell.addEventListener("click", () => setSelectedDate(dateKey));
+        elements.calendarGrid.appendChild(cell);
+      }
+    }
+
+    function renderHabits() {
+      const day = getDayData(state.selectedDate);
+      elements.habitList.innerHTML = "";
+
+      if (state.habits.length === 0) {
+        elements.habitList.innerHTML = '<div class="empty">No habits yet. Add one above or use starter habits.</div>';
+      } else {
+        state.habits.forEach((habit) => {
+          const checked = Boolean(day.habits[habit.id]);
+          const streak = countHabitStreak(habit.id);
+          const item = document.createElement("div");
+          item.className = "habit-item";
+          item.innerHTML = `
+            <div class="habit-head">
+              <div class="habit-main">
+                <input class="habit-check" type="checkbox" ${checked ? "checked" : ""} aria-label="Toggle ${habit.name}" />
+                <div>
+                  <div class="habit-name">${escapeHtml(habit.name)}</div>
+                  <div class="habit-sub">${checked ? "Completed today" : "Not done yet"} · Current streak: ${streak} day${streak === 1 ? "" : "s"}</div>
+                </div>
+              </div>
+              <div class="habit-actions">
+                <button class="tiny-btn" type="button">Rename</button>
+                <button class="tiny-btn danger" type="button">Delete</button>
+              </div>
+            </div>
+          `;
+
+          const [checkbox, renameButton, deleteButton] = item.querySelectorAll("button, input");
+          checkbox.addEventListener("change", () => toggleHabit(habit.id));
+          renameButton.addEventListener("click", () => renameHabit(habit.id));
+          deleteButton.addEventListener("click", () => deleteHabit(habit.id));
+          elements.habitList.appendChild(item);
+        });
+      }
+
+      const completed = state.habits.filter((habit) => day.habits[habit.id]).length;
+      elements.habitCompletionStat.textContent = `${completed} / ${state.habits.length}`;
+    }
+
+    function renderEvents() {
+      const day = getDayData(state.selectedDate);
+      const events = [...day.events].sort((a, b) => a.time.localeCompare(b.time));
+      elements.eventList.innerHTML = "";
+      elements.timeline.innerHTML = "";
+      elements.eventCountStat.textContent = String(events.length);
+
+      if (events.length === 0) {
+        elements.eventList.innerHTML = '<div class="empty">No events for this day yet.</div>';
+      } else {
+        events.forEach((event) => {
+          const item = document.createElement("div");
+          item.className = "event-item";
+          item.innerHTML = `
+            <div class="event-head">
+              <div>
+                <div class="event-title">${escapeHtml(event.title)}</div>
+                <div class="event-sub">${formatTime(event.time)}${event.details ? ` · ${escapeHtml(event.details)}` : ""}</div>
+              </div>
+              <div class="event-actions">
+                <button class="tiny-btn" type="button">Edit</button>
+                <button class="tiny-btn danger" type="button">Delete</button>
+              </div>
+            </div>
+          `;
+
+          const [editButton, deleteButton] = item.querySelectorAll("button");
+          editButton.addEventListener("click", () => editEvent(event.id));
+          deleteButton.addEventListener("click", () => deleteEvent(event.id));
+          elements.eventList.appendChild(item);
+        });
+      }
+
+      TIMELINE_HOURS.forEach((hour) => {
+        const hourKey = String(hour).padStart(2, "0");
+        const matchingEvents = events.filter((event) => event.time.startsWith(`${hourKey}:`));
+        const row = document.createElement("div");
+        row.className = "timeline-row";
+        row.innerHTML = `
+          <div class="timeline-time">${formatTime(`${hourKey}:00`)}</div>
+          <div class="timeline-slot"></div>
+        `;
+
+        const slot = row.querySelector(".timeline-slot");
+        if (matchingEvents.length === 0) {
+          slot.innerHTML = '<span class="muted">&nbsp;</span>';
+        } else {
+          slot.innerHTML = matchingEvents
+            .map((event) => `
+              <div class="timeline-event">
+                <div class="event-title">${escapeHtml(event.title)}</div>
+                <div class="event-sub">${formatTime(event.time)}${event.details ? ` · ${escapeHtml(event.details)}` : ""}</div>
+              </div>
+            `)
+            .join("");
+        }
+
+        elements.timeline.appendChild(row);
+      });
+    }
+
+    function renderNotes() {
+      const day = getDayData(state.selectedDate);
+      elements.notesInput.value = day.notes;
+      elements.saveStatus.textContent = "Saved";
+      elements.notesDateLabel.textContent = `Notes for ${formatLongDate(state.selectedDate)}`;
+    }
+
+    function renderHeaderStats() {
+      elements.selectedDateLabel.textContent = formatLongDate(state.selectedDate);
+    }
+
+    function render() {
+      renderHeaderStats();
+      renderCalendar();
+      renderHabits();
+      renderEvents();
+      renderNotes();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    elements.prevMonthBtn.addEventListener("click", () => shiftMonth(-1));
+    elements.nextMonthBtn.addEventListener("click", () => shiftMonth(1));
+    elements.todayBtn.addEventListener("click", () => setSelectedDate(todayKey));
+    elements.addHabitBtn.addEventListener("click", addHabit);
+    elements.newHabitInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") addHabit();
+    });
+    elements.addEventBtn.addEventListener("click", addEvent);
+    elements.eventTitleInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") addEvent();
+    });
+    elements.notesInput.addEventListener("input", (event) => updateNotes(event.target.value));
+    elements.exportBtn.addEventListener("click", exportData);
+    elements.importBtn.addEventListener("click", () => elements.importFile.click());
+    elements.importFile.addEventListener("change", (event) => {
+      const file = event.target.files?.[0];
+      if (file) importData(file);
+      event.target.value = "";
+    });
+    elements.seedBtn.addEventListener("click", addStarterHabits);
+
+    render();
+  </script>
+</body>
+</html>
